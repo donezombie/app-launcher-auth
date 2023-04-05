@@ -1,8 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
 import AuthenticationProvider from './components/authenticationProvider';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Callback from './pages/Callback';
@@ -18,6 +16,8 @@ root.render(
       redirect_uri: 'http://localhost:3001/login/callback',
       scope: 'openid email profile aws.cognito.signin.user.admin',
       response_type: 'code',
+      logoutRedirectLink:
+        'https://betterhome-mvp.auth.ap-southeast-1.amazoncognito.com/logout?client_id=6qudor4hlc22kqlqsjc8ct2cfg&logout_uri=http://localhost:3001/logout',
     }}
   >
     <BrowserRouter>
@@ -32,4 +32,3 @@ root.render(
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

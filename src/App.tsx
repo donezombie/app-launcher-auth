@@ -1,7 +1,6 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
 import { useAuth } from './components/authenticationProvider';
+import './App.css';
 
 function App() {
   const { user, isLogged, loading, logout, loginPopup } = useAuth();
@@ -22,7 +21,6 @@ function App() {
   return (
     <div className='App'>
       <header className='App-header'>
-        <img src={logo} className='App-logo' alt='logo' />
         {renderContent()}
 
         {!isLogged && <button onClick={loginPopup}>Sign in</button>}

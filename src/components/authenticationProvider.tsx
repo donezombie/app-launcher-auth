@@ -1,3 +1,4 @@
+import React from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import httpService from './httpService';
 import { isEmpty } from 'lodash';
@@ -96,7 +97,9 @@ const AuthenticationProvider = ({
   config,
 }: {
   children: any;
-  config: UserManagerSettings;
+  config: UserManagerSettings & {
+    logoutRedirectLink?: string;
+  };
 }) => {
   //! State
   const authService = useMemo(() => new AuthService(config), [config]);
@@ -172,11 +175,13 @@ const AuthenticationProvider = ({
       authService.removeUser();
       httpService.clearAuthStorage();
       window.sessionStorage.clear();
-      window.location.reload();
+      if (config.logoutRedirectLink) {
+        window.location.href = config.logoutRedirectLink;
+      }
     } catch (error) {
       alert(error);
     }
-  }, [authService]);
+  }, [config.logoutRedirectLink, authService]);
 
   const postMessageToLauncher = useCallback(
     ({ action, value }: PostMessageI) => {
