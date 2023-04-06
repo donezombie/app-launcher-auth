@@ -44,6 +44,8 @@ export declare const useAuth: () => AuthenticationContextI;
 declare const AuthenticationProvider: ({ children, config, }: {
     children: any;
     config: UserManagerSettings & {
+        launchUrl?: string;
+        apiGetUserUrl?: string;
         logoutRedirectLink?: string;
     };
 }) => JSX.Element;

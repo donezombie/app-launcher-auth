@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import AuthenticationProvider from './components/authenticationProvider';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import Callback from './pages/Callback';
+import CallbackLogout from './components/CallbackLogout';
+import CallbackLoginPopup from './components/CallbackLoginPopup';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
@@ -16,6 +17,7 @@ root.render(
       redirect_uri: 'http://localhost:3001/login/callback',
       scope: 'openid email profile aws.cognito.signin.user.admin',
       response_type: 'code',
+      apiGetUserUrl: 'https://betterhome-mvp.twenty-tech.com/api/user/get-user-info',
       logoutRedirectLink:
         'https://betterhome-mvp.auth.ap-southeast-1.amazoncognito.com/logout?client_id=6qudor4hlc22kqlqsjc8ct2cfg&logout_uri=http://localhost:3001/logout',
     }}
@@ -23,7 +25,8 @@ root.render(
     <BrowserRouter>
       <Routes>
         <Route path='/' element={<App />} />
-        <Route path='/login/callback' element={<Callback />} />
+        <Route path='/login/callback' element={<CallbackLoginPopup />} />
+        <Route path='/logout' element={<CallbackLogout />} />
       </Routes>
     </BrowserRouter>
   </AuthenticationProvider>

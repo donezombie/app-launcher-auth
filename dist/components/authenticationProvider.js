@@ -29,7 +29,7 @@ const AuthenticationContext = createContext({
     postMessageToLauncher: () => { },
 });
 export const useAuth = () => useContext(AuthenticationContext);
-const useGetUserInfo = (isTrigger) => {
+const useGetUserInfo = ({ isTrigger = false, api = '' }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     useEffect(() => {
@@ -38,7 +38,7 @@ const useGetUserInfo = (isTrigger) => {
         (() => __awaiter(void 0, void 0, void 0, function* () {
             try {
                 setLoading(true);
-                const response = yield httpService.get(`https://betterhome-mvp.twenty-tech.com/api/user/get-user-info`);
+                const response = yield httpService.get(`${api}`);
                 setData(response === null || response === void 0 ? void 0 : response.data);
                 setLoading(false);
             }
@@ -46,7 +46,7 @@ const useGetUserInfo = (isTrigger) => {
                 setLoading(false);
             }
         }))();
-    }, [isTrigger]);
+    }, [isTrigger, api]);
     return { data, loading };
 };
 const AuthenticationProvider = ({ children, config, }) => {
@@ -60,7 +60,10 @@ const AuthenticationProvider = ({ children, config, }) => {
     const [userData, setUserData] = useState(null);
     const [isCheckingAuth, setCheckingAuth] = useState(false);
     const accessToken = token || (userData === null || userData === void 0 ? void 0 : userData.access_token) || '';
-    const { data: resUser, loading } = useGetUserInfo(!!accessToken && isTokenAttached);
+    const { data: resUser, loading } = useGetUserInfo({
+        isTrigger: !!accessToken && isTokenAttached,
+        api: (config === null || config === void 0 ? void 0 : config.apiGetUserUrl) || '',
+    });
     const user = resUser || null;
     const onGetUserDataSuccess = useCallback((user) => {
         if (user) {
@@ -87,7 +90,7 @@ const AuthenticationProvider = ({ children, config, }) => {
                 setCheckingAuth(false);
             }
             catch (error) {
-                alert(error);
+                console.error(error);
                 setCheckingAuth(false);
             }
         }))();
@@ -101,7 +104,7 @@ const AuthenticationProvider = ({ children, config, }) => {
             }
         }
         catch (error) {
-            alert(error);
+            console.error(error);
         }
     }), []);
     const loginRedirectCallback = useCallback(() => __awaiter(void 0, void 0, void 0, function* () {
@@ -112,11 +115,20 @@ const AuthenticationProvider = ({ children, config, }) => {
             }
         }
         catch (error) {
-            alert(error);
+            console.error(error);
         }
     }), []);
+    const postMessageToLauncher = useCallback(({ action, value }) => {
+        if (parent) {
+            parent.postMessage({ action, value, idApp }, (config === null || config === void 0 ? void 0 : config.launchUrl) || '');
+        }
+    }, [idApp, config.launchUrl]);
     const logout = useCallback(() => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            if (isLaunchFromApp) {
+                postMessageToLauncher({ action: 'logout', value: '' });
+                return;
+            }
             authService.removeUser();
             httpService.clearAuthStorage();
             window.sessionStorage.clear();
@@ -125,14 +137,9 @@ const AuthenticationProvider = ({ children, config, }) => {
             }
         }
         catch (error) {
-            alert(error);
+            console.error(error);
         }
-    }), [config.logoutRedirectLink, authService]);
-    const postMessageToLauncher = useCallback(({ action, value }) => {
-        if (parent) {
-            parent.postMessage({ action, value, idApp }, 'http://localhost:3000');
-        }
-    }, [idApp]);
+    }), [config.logoutRedirectLink, isLaunchFromApp, postMessageToLauncher, authService]);
     const eventListener = useCallback((cb) => {
         const addEventListener = window.addEventListener;
         const eventMethod = addEventListener ? 'addEventListener' : 'attachEvent';

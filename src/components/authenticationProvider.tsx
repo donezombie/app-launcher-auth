@@ -68,7 +68,7 @@ const AuthenticationContext = createContext<AuthenticationContextI>({
 
 export const useAuth = () => useContext(AuthenticationContext);
 
-const useGetUserInfo = (isTrigger?: boolean) => {
+const useGetUserInfo = ({ isTrigger = false, api = '' }: { isTrigger?: boolean; api?: string }) => {
   const [data, setData] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -78,16 +78,14 @@ const useGetUserInfo = (isTrigger?: boolean) => {
     (async () => {
       try {
         setLoading(true);
-        const response = await httpService.get(
-          `https://betterhome-mvp.twenty-tech.com/api/user/get-user-info`
-        );
+        const response = await httpService.get(`${api}`);
         setData(response?.data as UserInfo);
         setLoading(false);
       } catch (error) {
         setLoading(false);
       }
     })();
-  }, [isTrigger]);
+  }, [isTrigger, api]);
 
   return { data, loading };
 };
@@ -98,6 +96,8 @@ const AuthenticationProvider = ({
 }: {
   children: any;
   config: UserManagerSettings & {
+    launchUrl?: string;
+    apiGetUserUrl?: string;
     logoutRedirectLink?: string;
   };
 }) => {
@@ -113,7 +113,10 @@ const AuthenticationProvider = ({
   const [isCheckingAuth, setCheckingAuth] = useState(false);
 
   const accessToken = token || userData?.access_token || '';
-  const { data: resUser, loading } = useGetUserInfo(!!accessToken && isTokenAttached);
+  const { data: resUser, loading } = useGetUserInfo({
+    isTrigger: !!accessToken && isTokenAttached,
+    api: config?.apiGetUserUrl || '',
+  });
   const user = resUser || null;
 
   const onGetUserDataSuccess = useCallback((user: User | null) => {
@@ -141,7 +144,7 @@ const AuthenticationProvider = ({
 
         setCheckingAuth(false);
       } catch (error) {
-        alert(error);
+        console.error(error);
         setCheckingAuth(false);
       }
     })();
@@ -155,7 +158,7 @@ const AuthenticationProvider = ({
         window.location.reload();
       }
     } catch (error) {
-      alert(error);
+      console.error(error);
     }
   }, []);
 
@@ -166,12 +169,26 @@ const AuthenticationProvider = ({
         onGetUserDataSuccess(user);
       }
     } catch (error) {
-      alert(error);
+      console.error(error);
     }
   }, []);
 
+  const postMessageToLauncher = useCallback(
+    ({ action, value }: PostMessageI) => {
+      if (parent) {
+        parent.postMessage({ action, value, idApp }, config?.launchUrl || '');
+      }
+    },
+    [idApp, config.launchUrl]
+  );
+
   const logout = useCallback(async () => {
     try {
+      if (isLaunchFromApp) {
+        postMessageToLauncher({ action: 'logout', value: '' });
+        return;
+      }
+
       authService.removeUser();
       httpService.clearAuthStorage();
       window.sessionStorage.clear();
@@ -179,18 +196,9 @@ const AuthenticationProvider = ({
         window.location.href = config.logoutRedirectLink;
       }
     } catch (error) {
-      alert(error);
+      console.error(error);
     }
-  }, [config.logoutRedirectLink, authService]);
-
-  const postMessageToLauncher = useCallback(
-    ({ action, value }: PostMessageI) => {
-      if (parent) {
-        parent.postMessage({ action, value, idApp }, 'http://localhost:3000');
-      }
-    },
-    [idApp]
-  );
+  }, [config.logoutRedirectLink, isLaunchFromApp, postMessageToLauncher, authService]);
 
   const eventListener = useCallback((cb: (e: any) => void) => {
     const addEventListener = window.addEventListener as any;
