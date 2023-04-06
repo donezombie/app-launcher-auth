@@ -1,46 +1,92 @@
-# Getting Started with Create React App
+# App Laucher Auth - Usage
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Example
+You may be using [Example](https://github.com/donezombie/auth-example.git).
 
-## Available Scripts
+## index.tsx
+```
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-In the project directory, you can run:
+import {
+  AuthenticationProvider,
+  CallbackLoginPopup,
+  CallbackLogout,
+} from "app-launcher-auth";
 
-### `npm start`
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
+  <AuthenticationProvider
+    config={{
+      authority:
+        "https://cognito-idp.ap-southeast-1.amazonaws.com/ap-southeast-1_7wzWV6yyL",
+      client_id: "6qudor4hlc22kqlqsjc8ct2cfg",
+      client_secret: "4i64703bh2eo3rs5tobfkahkkmkf44su7ogvam2fr65hdk95605",
+      redirect_uri: "http://localhost:3001/login/callback",
+      scope: "openid email profile aws.cognito.signin.user.admin",
+      response_type: "code",
+      logoutRedirectLink:
+        "https://betterhome-mvp.auth.ap-southeast-1.amazoncognito.com/logout?client_id=6qudor4hlc22kqlqsjc8ct2cfg&logout_uri=http://localhost:3001/logout",
+      apiGetUserUrl: `https://betterhome-mvp.twenty-tech.com/api/user/get-user-info`,
+    }}
+  >
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/login/callback" element={<CallbackLoginPopup />} />
+        <Route path="/logout" element={<CallbackLogout />} />
+      </Routes>
+    </BrowserRouter>
+  </AuthenticationProvider>
+);
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+```
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## other-component.tsx
+```
+import logo from './logo.svg';
+import './App.css';
+import { useAuth } from 'app-launcher-auth';
 
-### `npm test`
+function App() {
+  const { user, isLogged, loading, logout, loginPopup } = useAuth();
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+  const renderContent = () => {
+    if (loading) {
+      return '';
+    }
 
-### `npm run build`
+    return (
+      <>
+        <p>Logged: {`${isLogged}`}</p>
+        <p>{JSON.stringify(user)}</p>
+      </>
+    );
+  };
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+  return (
+    <div className='App'>
+      <header className='App-header'>
+        {renderContent()}
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+        {!isLogged && <button onClick={loginPopup}>Sign in</button>}
+        {isLogged && (
+          <button style={{ marginTop: 12 }} onClick={logout}>
+            Logout
+          </button>
+        )}
+      </header>
+    </div>
+  );
+}
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+export default App;
+```

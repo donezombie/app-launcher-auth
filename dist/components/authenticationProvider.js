@@ -65,7 +65,7 @@ const AuthenticationProvider = ({ children, config, }) => {
         api: (config === null || config === void 0 ? void 0 : config.apiGetUserUrl) || '',
     });
     const user = resUser || null;
-    const onGetUserDataSuccess = useCallback((user) => {
+    const onGetUserDataSuccess = useCallback(({ user, token }) => {
         if (user) {
             const accessToken = user === null || user === void 0 ? void 0 : user.access_token;
             httpService.saveUserStorage(user);
@@ -74,18 +74,27 @@ const AuthenticationProvider = ({ children, config, }) => {
             setTokenAttached(true);
             setUserData(user);
         }
+        if (token) {
+            httpService.saveTokenStorage(accessToken);
+            httpService.attachTokenToHeader(accessToken);
+            setTokenAttached(true);
+        }
     }, []);
     useEffect(() => {
+        if (isLaunchFromApp) {
+            onGetUserDataSuccess({ token });
+            return;
+        }
         (() => __awaiter(void 0, void 0, void 0, function* () {
             try {
                 setCheckingAuth(true);
                 const user = yield authService.getUser();
                 if (user) {
-                    onGetUserDataSuccess(user);
+                    onGetUserDataSuccess({ user });
                 }
                 else {
                     const userStorage = httpService.getUserStorage();
-                    userStorage && onGetUserDataSuccess(userStorage);
+                    userStorage && onGetUserDataSuccess({ user: userStorage });
                 }
                 setCheckingAuth(false);
             }
@@ -94,7 +103,7 @@ const AuthenticationProvider = ({ children, config, }) => {
                 setCheckingAuth(false);
             }
         }))();
-    }, [onGetUserDataSuccess, authService]);
+    }, [onGetUserDataSuccess, isLaunchFromApp, token, authService]);
     const loginPopup = useCallback(() => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const loginPopupBinded = authService.loginPopup.bind(authService);
@@ -111,7 +120,7 @@ const AuthenticationProvider = ({ children, config, }) => {
         try {
             const user = yield authService.loginRedirectCallback();
             if (user) {
-                onGetUserDataSuccess(user);
+                onGetUserDataSuccess({ user });
             }
         }
         catch (error) {

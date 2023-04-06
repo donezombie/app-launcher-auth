@@ -18,6 +18,7 @@ root.render(
       scope: 'openid email profile aws.cognito.signin.user.admin',
       response_type: 'code',
       apiGetUserUrl: 'https://betterhome-mvp.twenty-tech.com/api/user/get-user-info',
+      launchUrl: 'http://localhost:3000',
       logoutRedirectLink:
         'https://betterhome-mvp.auth.ap-southeast-1.amazoncognito.com/logout?client_id=6qudor4hlc22kqlqsjc8ct2cfg&logout_uri=http://localhost:3001/logout',
     }}

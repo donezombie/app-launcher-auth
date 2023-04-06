@@ -119,27 +119,41 @@ const AuthenticationProvider = ({
   });
   const user = resUser || null;
 
-  const onGetUserDataSuccess = useCallback((user: User | null) => {
-    if (user) {
-      const accessToken = user?.access_token;
-      httpService.saveUserStorage(user);
-      httpService.saveTokenStorage(accessToken);
-      httpService.attachTokenToHeader(accessToken);
-      setTokenAttached(true);
-      setUserData(user);
-    }
-  }, []);
+  const onGetUserDataSuccess = useCallback(
+    ({ user, token }: { user?: User | null; token?: string }) => {
+      if (user) {
+        const accessToken = user?.access_token;
+        httpService.saveUserStorage(user);
+        httpService.saveTokenStorage(accessToken);
+        httpService.attachTokenToHeader(accessToken);
+        setTokenAttached(true);
+        setUserData(user);
+      }
+
+      if (token) {
+        httpService.saveTokenStorage(accessToken);
+        httpService.attachTokenToHeader(accessToken);
+        setTokenAttached(true);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
+    if (isLaunchFromApp) {
+      onGetUserDataSuccess({ token });
+      return;
+    }
+
     (async () => {
       try {
         setCheckingAuth(true);
         const user = await authService.getUser();
         if (user) {
-          onGetUserDataSuccess(user);
+          onGetUserDataSuccess({ user });
         } else {
           const userStorage = httpService.getUserStorage();
-          userStorage && onGetUserDataSuccess(userStorage);
+          userStorage && onGetUserDataSuccess({ user: userStorage });
         }
 
         setCheckingAuth(false);
@@ -148,7 +162,7 @@ const AuthenticationProvider = ({
         setCheckingAuth(false);
       }
     })();
-  }, [onGetUserDataSuccess, authService]);
+  }, [onGetUserDataSuccess, isLaunchFromApp, token, authService]);
 
   const loginPopup = useCallback(async () => {
     try {
@@ -166,7 +180,7 @@ const AuthenticationProvider = ({
     try {
       const user = await authService.loginRedirectCallback();
       if (user) {
-        onGetUserDataSuccess(user);
+        onGetUserDataSuccess({ user });
       }
     } catch (error) {
       console.error(error);
